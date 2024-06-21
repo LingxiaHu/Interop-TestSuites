@@ -552,7 +552,10 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
             CoauthSubRequestType subRequest = SharedTestSuiteHelper.CreateCoauthSubRequestForJoinCoauthSession(SharedTestSuiteHelper.DefaultClientID, SharedTestSuiteHelper.ReservedSchemaLockID);
             CellStorageResponse cellResponse = this.Adapter.CellStorageRequest(this.DefaultFileUrl, new SubRequestType[] { subRequest });
             CoauthSubResponseType joinResponse = SharedTestSuiteHelper.ExtractSubResponse<CoauthSubResponseType>(cellResponse, 0, 0, this.Site);
-            this.Site.Assert.AreEqual(ErrorCodeType.Success, SharedTestSuiteHelper.ConvertToErrorCodeType(joinResponse.ErrorCode, this.Site), "The first client should join the coauthoring session successfully.");
+            this.Site.Assert.AreEqual(
+                ErrorCodeType.Success, 
+                SharedTestSuiteHelper.ConvertToErrorCodeType(joinResponse.ErrorCode, this.Site), 
+                "The first client should join the coauthoring session successfully.");
             this.StatusManager.RecordCoauthSession(this.DefaultFileUrl, SharedTestSuiteHelper.DefaultClientID, SharedTestSuiteHelper.ReservedSchemaLockID);
 
             this.CaptureCoauthStatusRelatedRequirementsWhenJoinCoauthoringSession(joinResponse);
@@ -671,6 +674,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
             // Send this subRequest to the protocol server, expect the protocol server not to return CoauthStatus attribute.
             CellStorageResponse response = this.Adapter.CellStorageRequest(this.DefaultFileUrl, new SubRequestType[] { subRequest });
             CoauthSubResponseType subReponse = SharedTestSuiteHelper.ExtractSubResponse<CoauthSubResponseType>(response, 0, 0, this.Site);
+            
             this.Site.Assert.AreEqual<ErrorCodeType>(ErrorCodeType.Success, SharedTestSuiteHelper.ConvertToErrorCodeType(subReponse.ErrorCode, this.Site), "The coauthoring subRequest should be falls back to exclusive lock successfully.");
             this.StatusManager.RecordExclusiveLock(this.DefaultFileUrl, SharedTestSuiteHelper.DefaultExclusiveLockID);
 
@@ -1067,7 +1071,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
                              SharedTestSuiteHelper.ConvertToErrorCodeType(subResponse.ErrorCode, this.Site),
                              "MS-FSSHTTP",
                              3104,
-                             @"[In Appendix B: Product Behavior] When the coauthoring feature is disabled on the protocol server, if the AllowFallbackToExclusive attribute is set to false, the implementation does return an error code value set to ""FileNotLockedOnServerAsCoauthDisabled"". (<40> Section 3.1.4.3.1:  SharePoint Server 2010 will return an error code value ""FileNotLockedOnServerAsCoauthDisabled"" if the AllowFallbackToExclusive attribute is set to false.)");
+                             @"[In Appendix B: Product Behavior] When the coauthoring feature is disabled on the protocol server, if the AllowFallbackToExclusive attribute is set to false, the implementation does return an error code value set to ""FileNotLockedOnServerAsCoauthDisabled"". (<42> Section 3.1.4.3.1:  SharePoint Server 2010 will return an error code value ""FileNotLockedOnServerAsCoauthDisabled"", if the AllowFallbackToExclusive attribute is set to false.)");
 
                     Site.CaptureRequirementIfAreEqual<ErrorCodeType>(
                              ErrorCodeType.FileNotLockedOnServerAsCoauthDisabled,
@@ -1075,6 +1079,24 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
                              "MS-FSSHTTP",
                              382,
                              @"[In LockAndCoauthRelatedErrorCodeTypes] FileNotLockedOnServerAsCoauthDisabled indicates an error when no shared lock exists on a file because coauthoring of the file is disabled on the server.");
+                }
+
+                // Verify MS-FSSHTTP requirement: MS-FSSHTTP_R310401 and MS-FSSHTTP_R383
+                if (Common.IsRequirementEnabled("MS-FSSHTTP-FSSHTTPB", 310401, this.Site))
+                {
+                    Site.CaptureRequirementIfAreEqual<ErrorCodeType>(
+                             ErrorCodeType.LockNotConvertedAsCoauthDisabled,
+                             SharedTestSuiteHelper.ConvertToErrorCodeType(subResponse.ErrorCode, this.Site),
+                             "MS-FSSHTTP",
+                             310401,
+                             @"[In Appendix B: Product Behavior] When the coauthoring feature is disabled on the protocol server, if the AllowFallbackToExclusive attribute is set to false, the implementation does return an error code value set to ""FileNotLockedOnServerAsCoauthDisabled"". (<42> Section 3.1.4.3.1:  SharePoint Server 2019 and SharePoint Server Subscription Edition will return an error code value ""LockNotConvertedAsCoauthDisabled"", if the AllowFallbackToExclusive attribute is set to false.)");
+
+                    Site.CaptureRequirementIfAreEqual<ErrorCodeType>(
+                             ErrorCodeType.LockNotConvertedAsCoauthDisabled,
+                             SharedTestSuiteHelper.ConvertToErrorCodeType(subResponse.ErrorCode, this.Site),
+                             "MS-FSSHTTP",
+                             383,
+                             @"[In LockAndCoauthRelatedErrorCodeTypes] Indicates an error when a protocol server fails to process a lock conversion request sent as part of a cell storage service request because coauthoring of the file is disabled on the server.");
                 }
 
                 if (Common.IsRequirementEnabled(11274, this.Site))
@@ -1111,6 +1133,14 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
                         ErrorCodeType.FileNotLockedOnServerAsCoauthDisabled,
                         SharedTestSuiteHelper.ConvertToErrorCodeType(subResponse.ErrorCode, this.Site),
                         @"When the coauthoring feature is disabled on the protocol server, if the AllowFallbackToExclusive attribute is set to false, the implementation does return an error code value set to ""FileNotLockedOnServerAsCoauthDisabled"". (Microsoft Office 2010 suites/Microsoft SharePoint Foundation 2010/Microsoft SharePoint Server 2010/Microsoft SharePoint Workspace 2010/Microsoft Office 2016/Microsoft SharePoint Server 2016 follow this behavior.)");
+                }
+
+                if (Common.IsRequirementEnabled("MS-FSSHTTP-FSSHTTPB", 310401, this.Site))
+                {
+                    Site.Assert.AreEqual<ErrorCodeType>(
+                        ErrorCodeType.LockNotConvertedAsCoauthDisabled,
+                        SharedTestSuiteHelper.ConvertToErrorCodeType(subResponse.ErrorCode, this.Site),
+                        @"When the coauthoring feature is disabled on the protocol server, if the AllowFallbackToExclusive attribute is set to false, the implementation does return an error code value set to ""LockNotConvertedAsCoauthDisabled"". (SharePoint Server 2019 and SharePoint Server Subscription Edition follow this behavior.)");
                 }
 
                 if (Common.IsRequirementEnabled("MS-FSSHTTP-FSSHTTPB", 3105, this.Site))
@@ -2288,7 +2318,18 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
                              SharedTestSuiteHelper.ConvertToErrorCodeType(refreshSubResponse.ErrorCode, this.Site),
                              "MS-FSSHTTP",
                              3108,
-                             @"[In Appendix B: Product Behavior] When the refresh of the shared lock on the file for that specific client fails because the file is no longer locked since the timeout value expired on the lock in the file coauthoring tracker, if the coauthoring feature is disabled, the implementation does return an error code value set to ""FileNotLockedOnServerAsCoauthDisabled"". (<43> Section 3.1.4.3.3:  SharePoint Server 2010 will return an error code value ""FileNotLockedOnServerAsCoauthDisabled"".)");
+                             @"[In Appendix B: Product Behavior] When the refresh of the shared lock on the file for that specific client fails because the file is no longer locked since the timeout value expired on the lock in the file coauthoring tracker, if the coauthoring feature is disabled, the implementation does return an error code value set to ""FileNotLockedOnServerAsCoauthDisabled"". (<45> Section 3.1.4.3.3:  SharePoint Server 2010 will return an error code value ""FileNotLockedOnServerAsCoauthDisabled"".)");
+                }
+
+                if (Common.IsRequirementEnabled("MS-FSSHTTP-FSSHTTPB", 310801, this.Site))
+                {
+                    // Verify MS-FSSHTTP requirement: MS-FSSHTTP_R310801
+                    Site.CaptureRequirementIfAreEqual<ErrorCodeType>(
+                             ErrorCodeType.Success,
+                             SharedTestSuiteHelper.ConvertToErrorCodeType(refreshSubResponse.ErrorCode, this.Site),
+                             "MS-FSSHTTP",
+                             310801,
+                             @"[In Appendix B: Product Behavior] When the refresh of the shared lock on the file for that specific client fails because the file is no longer locked since the timeout value expired on the lock in the file coauthoring tracker, if the coauthoring feature is disabled, the implementation does return an error code value set to ""FileNotLockedOnServerAsCoauthDisabled"". (<45> Section 3.1.4.3.3:  SharePoint Server 2019 and SharePoint Server Subscription Edition will return an error code value ""Success"".)");
                 }
 
                 if (Common.IsRequirementEnabled("MS-FSSHTTP-FSSHTTPB", 3109, this.Site))
@@ -2299,7 +2340,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
                              SharedTestSuiteHelper.ConvertToErrorCodeType(refreshSubResponse.ErrorCode, this.Site),
                              "MS-FSSHTTP",
                              3109,
-                             @"[In Appendix B: Product Behavior] When the refresh of the shared lock on the file for that specific client fails because the file is no longer locked since the timeout value expired on the lock in the file coauthoring tracker, if the coauthoring feature is disabled, the implementation does return an error code value set to ""FileNotLockedOnServer"". (Microsoft SharePoint Foundation 2013/Microsoft SharePoint Server 2013/Microsoft Office 2016/Microsoft SharePoint Server 2016/Microsoft Office 2019/Microsoft SharePoint Server 2019 follow this behavior.)");
+                             @"[In Appendix B: Product Behavior] When the refresh of the shared lock on the file for that specific client fails because the file is no longer locked since the timeout value expired on the lock in the file coauthoring tracker, if the coauthoring feature is disabled, the implementation does return an error code value set to ""FileNotLockedOnServer"". (Microsoft SharePoint Foundation 2013/Microsoft SharePoint Server 2013/Microsoft Office 2016/Microsoft SharePoint Server 2016 follow this behavior.)");
                 }
             }
             else
@@ -2310,6 +2351,14 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
                         ErrorCodeType.FileNotLockedOnServerAsCoauthDisabled,
                         SharedTestSuiteHelper.ConvertToErrorCodeType(refreshSubResponse.ErrorCode, this.Site),
                         @"When the refresh of the shared lock on the file for that specific client fails because the file is no longer locked since the timeout value expired on the lock in the file coauthoring tracker, if the coauthoring feature is disabled, the implementation does return an error code value set to ""FileNotLockedOnServerAsCoauthDisabled"". (Microsoft Office 2010 suites/Microsoft Office 2013/Microsoft SharePoint Foundation 2010/Microsoft SharePoint Server 2010/Microsoft SharePoint Workspace 2010/Microsoft Office 2016/Microsoft SharePoint Server 2016 follow this behavior.)");
+                }
+
+                if (Common.IsRequirementEnabled("MS-FSSHTTP-FSSHTTPB", 310801, this.Site))
+                {
+                    Site.Assert.AreEqual<ErrorCodeType>(
+                        ErrorCodeType.Success,
+                        SharedTestSuiteHelper.ConvertToErrorCodeType(refreshSubResponse.ErrorCode, this.Site),
+                        @"When the refresh of the shared lock on the file for that specific client fails because the file is no longer locked since the timeout value expired on the lock in the file coauthoring tracker, if the coauthoring feature is disabled, the implementation does return an error code value set to ""Success"". (SharePoint Server 2019 and SharePoint Server Subscription Edition follow this behavior.)");
                 }
 
                 if (Common.IsRequirementEnabled("MS-FSSHTTP-FSSHTTPB", 3109, this.Site))
@@ -2958,6 +3007,159 @@ A ReleaseLockOnConversionToExclusiveFailure attribute set to a value of false in
                 }
             }
         }
+
+        /// <summary>
+        /// A method used to verify the coauthoring status returned None when 1. file check out by current user.
+        /// </summary>
+        [TestCategory("SHAREDTESTCASE"), TestMethod()]
+        public void TestCase_S02_TC45_JoinCoauthoringSession_None_FileCheckOutByCurrentUser()
+        {
+            // Initialize the service
+            this.InitializeContext(this.DefaultFileUrl, this.UserName01, this.Password01, this.Domain);
+
+            // Check out the file
+            if (!this.SutManagedAdapter.CheckOutFile(this.DefaultFileUrl, this.UserName01, this.Password01, this.Domain))
+            {
+                this.Site.Assert.Fail("Cannot change the file {0} to check out status using the user name {1} and password {2}", this.DefaultFileUrl, this.UserName01, this.Password01);
+            }
+
+            this.StatusManager.RecordFileCheckOut(this.DefaultFileUrl, this.UserName01, this.Password01, this.Domain);
+
+            CheckLockAvailability();
+
+            // Get the coauthoring status of the client
+            CoauthSubRequestType subRequest = SharedTestSuiteHelper.CreateCoauthSubRequestForJoinCoauthSession(SharedTestSuiteHelper.DefaultClientID, SharedTestSuiteHelper.ReservedSchemaLockID);
+
+            CellStorageResponse cellResponse = this.Adapter.CellStorageRequest(this.DefaultFileUrl, new SubRequestType[] { subRequest });
+            CoauthSubResponseType getStatusResponse = SharedTestSuiteHelper.ExtractSubResponse<CoauthSubResponseType>(cellResponse, 0, 0, this.Site);
+
+            if (SharedContext.Current.IsMsFsshttpRequirementsCaptured)
+            {
+                // Verify MS-FSSHTTP requirement: MS-FSSHTTP_187801
+                Site.CaptureRequirementIfAreEqual<CoauthStatusType>(
+                         CoauthStatusType.None,
+                         getStatusResponse.SubResponseData.CoauthStatus,
+                         "MS-FSSHTTP",
+                         187801,
+                         @"[In Join Coauthoring Session] A CoauthStatus of ""None"" can be returned in situations where coauthoring is not achieved because an exclusive lock is returned instead of a shared lock.");
+
+                // Verify MS-FSSHTTP requirement: MS-FSSHTTP_187802
+                Site.CaptureRequirementIfAreEqual<CoauthStatusType>(
+                         CoauthStatusType.None,
+                         getStatusResponse.SubResponseData.CoauthStatus,
+                         "MS-FSSHTTP",
+                         187802,
+                         @"[In Join Coauthoring Session] This can happen when 1. the file is checked out by the current user [or 2. an exclusive lock is held by the current user or 3. the coauthoring feature is disabled and the AllowFallbackToExclusive attribute is set to true on the request.] ");
+
+            }
+            else
+            {
+                Site.Assert.AreEqual<CoauthStatusType>(
+                    CoauthStatusType.None,
+                    getStatusResponse.SubResponseData.CoauthStatus,
+                    @"A CoauthStatus of ""None"" can be returned in situations where coauthoring is not achieved because an exclusive lock is returned instead of a shared lock.");
+            }
+        }
+
+        /// <summary>
+        /// A method used to verify the coauthoring status returned None when 2. an exclusive lock is held by the current user.
+        /// </summary>
+        [TestCategory("SHAREDTESTCASE"), TestMethod()]
+        public void TestCase_S02_TC46_JoinCoauthoringSession_None_FileExclusiveLockHeldByCurrentUser()
+        {
+            // Initialize the service
+            this.InitializeContext(this.DefaultFileUrl, this.UserName02, this.Password02, this.Domain);
+
+            // Get the exclusive lock
+            this.PrepareExclusiveLock(this.DefaultFileUrl, SharedTestSuiteHelper.DefaultExclusiveLockID);
+
+            // Get the coauthoring status of the client
+            CoauthSubRequestType subRequest = SharedTestSuiteHelper.CreateCoauthSubRequestForJoinCoauthSession(SharedTestSuiteHelper.DefaultClientID, SharedTestSuiteHelper.ReservedSchemaLockID);
+
+            CellStorageResponse cellResponse = this.Adapter.CellStorageRequest(this.DefaultFileUrl, new SubRequestType[] { subRequest });
+            
+            CoauthSubResponseType getStatusResponse = SharedTestSuiteHelper.ExtractSubResponse<CoauthSubResponseType>(cellResponse, 0, 0, this.Site);
+
+            if (SharedContext.Current.IsMsFsshttpRequirementsCaptured)
+            {
+                // Verify MS-FSSHTTP requirement: MS-FSSHTTP_187801
+                Site.CaptureRequirementIfAreEqual<CoauthStatusType>(
+                         CoauthStatusType.None,
+                         getStatusResponse.SubResponseData.CoauthStatus,
+                         "MS-FSSHTTP",
+                         187801,
+                         @"[In Join Coauthoring Session] A CoauthStatus of ""None"" can be returned in situations where coauthoring is not achieved because an exclusive lock is returned instead of a shared lock.");
+
+                // Verify MS-FSSHTTP requirement: MS-FSSHTTP_187802
+                Site.CaptureRequirementIfAreEqual<CoauthStatusType>(
+                         CoauthStatusType.None,
+                         getStatusResponse.SubResponseData.CoauthStatus,
+                         "MS-FSSHTTP",
+                         187803,
+                         @"[In Join Coauthoring Session] This can happen when [1. the file is checked out by the current user or] 2. an exclusive lock is held by the current user [or 3. the coauthoring feature is disabled and the AllowFallbackToExclusive attribute is set to true on the request]. ");
+
+            }
+            else
+            {
+                Site.Assert.AreEqual<CoauthStatusType>(
+                    CoauthStatusType.None,
+                    getStatusResponse.SubResponseData.CoauthStatus,
+                    @"A CoauthStatus of ""None"" can be returned in situations where coauthoring is not achieved because an exclusive lock is returned instead of a shared lock.");
+            }
+        }
+
+        /// <summary>
+        /// A method used to verify the coauthoring status returned None when 2. an exclusive lock is held by the current user.
+        /// </summary>
+        [TestCategory("SHAREDTESTCASE"), TestMethod()]
+        public void TestCase_S02_TC47_JoinCoauthoringSession_None_FileCoauthoringFeatureDisableAndAllowFallbackToExclusiveSetTrue()
+        {
+            // Initialize the service
+            this.InitializeContext(this.DefaultFileUrl, this.UserName03, this.Password03, this.Domain);          
+
+            // Disable the Coauthoring Feature
+            bool isSwitchedSuccessfully = SutPowerShellAdapter.SwitchCoauthoringFeature(true);
+            this.Site.Assert.IsTrue(isSwitchedSuccessfully, "The Coauthoring Feature should be disabled.");
+            this.StatusManager.RecordDisableCoauth();
+
+            // Waiting change takes effect
+            System.Threading.Thread.Sleep(20 * 1000);
+
+            // Create a JoinCoauthoringSession subRequest with AllowFallbackToExclusive set to true.
+            CoauthSubRequestType subRequest = SharedTestSuiteHelper.CreateCoauthSubRequestForJoinCoauthSession(SharedTestSuiteHelper.DefaultClientID, SharedTestSuiteHelper.ReservedSchemaLockID);
+
+            subRequest.SubRequestData.AllowFallbackToExclusive = true;
+            
+            CellStorageResponse cellResponse = this.Adapter.CellStorageRequest(this.DefaultFileUrl, new SubRequestType[] { subRequest });
+            
+            CoauthSubResponseType getStatusResponse = SharedTestSuiteHelper.ExtractSubResponse<CoauthSubResponseType>(cellResponse, 0, 0, this.Site);
+
+            if (SharedContext.Current.IsMsFsshttpRequirementsCaptured)
+            {
+                // Verify MS-FSSHTTP requirement: MS-FSSHTTP_187801
+                Site.CaptureRequirementIfAreEqual<CoauthStatusType>(
+                         CoauthStatusType.None,
+                         getStatusResponse.SubResponseData.CoauthStatus,
+                         "MS-FSSHTTP",
+                         187801,
+                         @"[In Join Coauthoring Session] A CoauthStatus of ""None"" can be returned in situations where coauthoring is not achieved because an exclusive lock is returned instead of a shared lock.");
+
+                // Verify MS-FSSHTTP requirement: MS-FSSHTTP_187802
+                Site.CaptureRequirementIfAreEqual<CoauthStatusType>(
+                         CoauthStatusType.None,
+                         getStatusResponse.SubResponseData.CoauthStatus,
+                         "MS-FSSHTTP",
+                         187804,
+                         @"[In Join Coauthoring Session] This can happen when [1. the file is checked out by the current user or 2. an exclusive lock is held by the current user or] 3. the coauthoring feature is disabled and the AllowFallbackToExclusive attribute is set to true on the request.  ");
+            }
+            else
+            {
+                Site.Assert.AreEqual<CoauthStatusType>(
+                    CoauthStatusType.None,
+                    getStatusResponse.SubResponseData.CoauthStatus,
+                    @"A CoauthStatus of ""None"" can be returned in situations where coauthoring is not achieved because an exclusive lock is returned instead of a shared lock.");
+            }
+        }
         #endregion
 
         #endregion
@@ -2965,9 +3167,9 @@ A ReleaseLockOnConversionToExclusiveFailure attribute set to a value of false in
         #region Private helper function
 
         /// <summary>
-            /// A method used to capture LockType related requirements when joining coauthoring session.
-            /// </summary>
-            /// <param name="response">A return value represents the CoauthSubResponse information.</param>
+        /// A method used to capture LockType related requirements when joining coauthoring session.
+        /// </summary>
+        /// <param name="response">A return value represents the CoauthSubResponse information.</param>
         private void CaptureLockTypeRelatedRequirementsWhenJoinCoauthoringSession(CoauthSubResponseType response)
         {
             this.Site.Log.Add(

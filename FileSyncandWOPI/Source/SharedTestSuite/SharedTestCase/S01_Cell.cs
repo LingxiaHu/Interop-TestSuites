@@ -14,6 +14,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
     [TestClass]
     public abstract class S01_Cell : SharedTestSuiteBase
     {
+
         #region Test Suite Initialization and clean up
 
         /// <summary>
@@ -47,6 +48,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
         {
             // Initialize the default file URL
             this.DefaultFileUrl = this.PrepareFile();
+
         }
 
         #endregion

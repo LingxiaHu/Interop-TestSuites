@@ -12,6 +12,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
     [TestClass]
     public abstract class S15_CreateFile : SharedTestSuiteBase
     {
+        
         #region Test Suite Initialization
 
         /// <summary>
@@ -45,6 +46,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
         {
             // Initialize the default file URL, for this scenario, the target file URL should not need unique for each test case, just using the preparing one.
             this.DefaultFileUrl = Common.GetConfigurationPropertyValue("NormalFile", this.Site);
+            
         }
 
         #endregion

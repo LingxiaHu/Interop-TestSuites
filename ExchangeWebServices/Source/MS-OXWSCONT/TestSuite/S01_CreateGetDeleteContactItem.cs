@@ -122,7 +122,7 @@ namespace Microsoft.Protocols.TestSuites.MS_OXWSCONT
             // The contact item to get.
             ItemIdType[] itemArray = new ItemIdType[this.ExistContactItems.Count];
             this.ExistContactItems.CopyTo(itemArray, 0);
-
+ 
             GetItemResponseType getItemResponse = this.CallGetItemOperation(itemArray);
 
             // Check the response.

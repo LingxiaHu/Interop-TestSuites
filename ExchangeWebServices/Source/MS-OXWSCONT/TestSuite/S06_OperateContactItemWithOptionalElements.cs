@@ -232,7 +232,7 @@ namespace Microsoft.Protocols.TestSuites.MS_OXWSCONT
             this.ExistContactItems.CopyTo(itemArray, 0);
 
             GetItemResponseType getItemResponse = this.CallGetItemOperation(itemArray);
-
+ 
             // Check the response.
             Common.CheckOperationSuccess(getItemResponse, 1, this.Site);
             #endregion

@@ -25,14 +25,38 @@ namespace Microsoft.Protocols.TestSuites.SharedAdapter
             this.PartialLast = 0;
             this.FavorCoherencyFailureOverNotFound = 1;
             this.AbortRemainingPutChangesOnFailure = 0;
-            this.MultiRequestPutHint = 0;
+            this.Reserved1Bit = 0;
             this.ReturnCompleteKnowledgeIfPossible = 1;
             this.LastWriterWinsOnNextChange = 0;
+            this.Reserve1Byte = 0;
+
+            List<byte> byteList = new List<byte>();
+            byteList.AddRange(new byte[1]);
+            this.ContentVersionCoherencyCheck = new BinaryItem(byteList);
+
+            List<StringItem> Content = new List<StringItem>();
+            string str1 = "str1";
+            StringItem str1Item = new StringItem();
+            str1Item.Count = new Compact64bitInt((ulong)str1.Length);
+            str1Item.Content = str1;
+            Content.Add(str1Item);
+            string str2 = "str2";
+            StringItem str2Item = new StringItem();
+            str2Item.Count = new Compact64bitInt((ulong)str2.Length);
+            str2Item.Content = str2;
+            Content.Add(str2Item);
+
+            this.AuthorLogins = new StringItemArray((ulong)Content.Count, Content);        
 
             this.IsAdditionalFlagsUsed = false;
             this.IsLockIdUsed = false;
             this.IsDiagnosticRequestOptionInputUsed = false;
         }
+
+        /// <summary>
+        /// Gets or sets Storage Index Extended GUID (variable): An extended GUID that specifies the storage index.
+        /// </summary>
+        public ExGuid Reserved { get; set; }
 
         /// <summary>
         /// Gets or sets Storage Index Extended GUID (variable): An extended GUID that specifies the storage index.
@@ -72,7 +96,7 @@ namespace Microsoft.Protocols.TestSuites.SharedAdapter
         /// <summary>
         /// Gets or sets H - Multi-Request Put Hint (1 bit): A bit that specifies to reduce the number of auto coalesces during multi-request put scenarios, if only one request for a put changes, this bit is 0. 
         /// </summary>
-        public int MultiRequestPutHint { get; set; }
+        public int Reserved1Bit { get; set; }
 
         /// <summary>
         /// Gets or sets C - Return Complete Knowledge If Possible (1 bit): A bit that specifies to return the complete knowledge from the server provided that this request has exclusive access to the knowledge. Exclusive knowledge access is only granted on Coalesce and therefore complete knowledge will not be returned in non-coalescing sub-requests. 
@@ -83,6 +107,21 @@ namespace Microsoft.Protocols.TestSuites.SharedAdapter
         /// Gets or sets LastWriterWinsOnNextChange (1 bit): A bit that specifies to allow the Put Changes to be subsequently overwritten on the next put changes.
         /// </summary>
         public int LastWriterWinsOnNextChange { get; set; }
+
+        /// <summary>
+        /// Gets or sets ContentVersionCoherencyCheck (variable): A Binary Item (section 2.2.1.3) which MUST be ignored..
+        /// </summary>
+        public BinaryItem ContentVersionCoherencyCheck { get; set; }
+
+        /// <summary>
+        /// Gets or sets Author Logins (variable): A String Item Array (section 2.2.1.14) structure that defines author login information.
+        /// </summary>
+        public StringItemArray AuthorLogins { get; set; }
+
+        /// <summary>
+        /// Gets or sets Reserved (1 byte): MUST be ignored
+        /// </summary>
+        public int Reserve1Byte { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the additional flags is used.
@@ -137,11 +176,17 @@ namespace Microsoft.Protocols.TestSuites.SharedAdapter
         public int RequireStorageMappingsRooted { get; set; }
 
         /// <summary>
-        /// Gets or sets a value:  An 11-bit reserved field that MUST be set to zero.
+        /// Gets or sets a value:  An 10-bit reserved field that MUST be set to zero.
         /// If the IsAdditionalFlagsUsed is false, this property will be ignored.
         /// </summary>
         public int Reserve { get; set; }
-        
+
+        /// <summary>
+        /// Gets or sets a value: A compact unsigned 64-bit integer (section 2.2.1.1) that MUST be ignored.
+        /// If the IsAdditionalFlagsUsed is false, this property will be ignored.
+        /// </summary>
+        public Compact64bitInt Reserve2 { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether the lock id is used.
         /// </summary>
@@ -190,9 +235,15 @@ namespace Microsoft.Protocols.TestSuites.SharedAdapter
 
             // Expect Storage Index Extended GUID
             List<byte> expectedStorageIndexExtendedGUIDBytes = this.ExpectedStorageIndexExtendedGUID.SerializeToByteList();
-            
+
+            // ContentVersionCoherencyCheck
+            List<byte> contentVersionCoherencyCheckBytes = this.ContentVersionCoherencyCheck.SerializeToByteList();
+
+            // Author Logins 
+            List<byte> authorLoginsBytes = this.AuthorLogins.SerializeToByteList();
+
             // Put Changes Request
-            this.PutChangesRequestStart = new StreamObjectHeaderStart32bit(StreamObjectTypeHeaderStart.PutChangesRequest, 1 + storageIndexExtendedGUIDBytes.Count + expectedStorageIndexExtendedGUIDBytes.Count);
+            this.PutChangesRequestStart = new StreamObjectHeaderStart32bit(StreamObjectTypeHeaderStart.PutChangesRequest, 1 + storageIndexExtendedGUIDBytes.Count + expectedStorageIndexExtendedGUIDBytes.Count + contentVersionCoherencyCheckBytes.Count + authorLoginsBytes.Count + 1);
             List<byte> putChangesRequestBytes = this.PutChangesRequestStart.SerializeToByteList();
             
             // reserved
@@ -202,14 +253,17 @@ namespace Microsoft.Protocols.TestSuites.SharedAdapter
             bitWriter.AppendInit32(this.PartialLast, 1);
             bitWriter.AppendInit32(this.FavorCoherencyFailureOverNotFound, 1);
             bitWriter.AppendInit32(this.AbortRemainingPutChangesOnFailure, 1);
-            bitWriter.AppendInit32(this.MultiRequestPutHint, 1);
+            bitWriter.AppendInit32(this.Reserved1Bit, 1);
             bitWriter.AppendInit32(this.ReturnCompleteKnowledgeIfPossible, 1);
-            bitWriter.AppendInit32(this.LastWriterWinsOnNextChange, 1);
+            bitWriter.AppendInit32(this.LastWriterWinsOnNextChange, 1);          
+
+            // Reserve1Byte
+            List<byte> reserve1ByteBytes = new List<byte>(new byte[1]);
 
             List<byte> reservedBytes = new List<byte>(bitWriter.Bytes);
 
             List<byte> byteList = new List<byte>();
-            
+
             // sub-request start
             byteList.AddRange(base.SerializeToByteList());
             
@@ -225,6 +279,15 @@ namespace Microsoft.Protocols.TestSuites.SharedAdapter
             // reserved
             byteList.AddRange(reservedBytes);
 
+            // ContentVersionCoherencyCheck
+            byteList.AddRange(contentVersionCoherencyCheckBytes);
+
+            // Author Logins
+            byteList.AddRange(authorLoginsBytes);
+
+            // Reserve1Byte
+            byteList.AddRange(reserve1ByteBytes);
+
             if (this.IsAdditionalFlagsUsed)
             {
                 this.AdditionalFlagsStart = new StreamObjectHeaderStart32bit(StreamObjectTypeHeaderStart.AdditionalFlags, 2);
@@ -237,8 +300,12 @@ namespace Microsoft.Protocols.TestSuites.SharedAdapter
                 additionalFlagsWriter.AppendInit32(this.CoherencyCheckOnlyAppliedIndexEntries, 1);
                 additionalFlagsWriter.AppendInit32(this.FullFileReplacePut, 1);
                 additionalFlagsWriter.AppendInit32(this.RequireStorageMappingsRooted, 1);
-                additionalFlagsWriter.AppendInit32(this.Reserve, 10);
+                additionalFlagsWriter.AppendInit32(this.Reserve, 10);              
                 byteList.AddRange(additionalFlagsWriter.Bytes);
+
+                this.Reserve2 = new Compact64bitInt(0x0002000000000000);
+                byteList.AddRange(this.Reserve2.SerializeToByteList());
+
             }
 
             if (this.IsLockIdUsed)

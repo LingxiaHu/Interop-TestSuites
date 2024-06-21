@@ -224,7 +224,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
                                 bool isPartialLast = false,
                                 bool isFavorCoherencyFailureOverNotFound = true,
                                 bool isAbortRemainingPutChangesOnFailure = false,
-                                bool isMultiRequestPutHint = false,
+                                //bool isMultiRequestPutHint = false,
                                 bool isReturnCompleteKnowledgeIf = true,
                                 bool isLastWriterWinsOnNextChange = false)
         {
@@ -236,7 +236,7 @@ namespace Microsoft.Protocols.TestSuites.SharedTestSuite
             putChanges.PartialLast = Convert.ToInt32(isPartialLast);
             putChanges.FavorCoherencyFailureOverNotFound = Convert.ToInt32(isFavorCoherencyFailureOverNotFound);
             putChanges.AbortRemainingPutChangesOnFailure = Convert.ToInt32(isAbortRemainingPutChangesOnFailure);
-            putChanges.MultiRequestPutHint = Convert.ToInt32(isMultiRequestPutHint);
+            //putChanges.MultiRequestPutHint = Convert.ToInt32(isMultiRequestPutHint);
             putChanges.ReturnCompleteKnowledgeIfPossible = Convert.ToInt32(isReturnCompleteKnowledgeIf);
             putChanges.LastWriterWinsOnNextChange = Convert.ToInt32(isLastWriterWinsOnNextChange);
 
